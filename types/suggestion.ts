@@ -4,7 +4,6 @@ export interface Suggestion {
     userName: string
     email: string
     avatar: string
-    password: string
-    birthdate: Date
-    registeredAt: Date
+    company: string
+    jobTitle: string
 }
