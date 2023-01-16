@@ -1,34 +1,35 @@
-import React from 'react'
-import { PostType } from '../types/post'
+import { collection, QueryDocumentSnapshot, onSnapshot, orderBy, query} from 'firebase/firestore';
+import React, { useEffect, useState } from 'react'
 import Post from './Post'
+import { db } from '../firebase'
 
-const posts:PostType[] = [
-    {
-        id: 1,
-        userName: 'BoyToy',
-        userImg: 'https://links.papareact.com/3ke',
-        img: 'https://links.papareact.com/3ke',
-        caption: 'I like in raw',
-    },
-    {
-        id: 2,
-        userName: 'Willy Tray',
-        userImg: 'https://links.papareact.com/3ke',
-        img: 'https://links.papareact.com/3ke',
-        caption: 'Yeeeeeeeehhhaaawww',
-    },
-]
 
 function Posts() {
+    const [posts, setPosts] = useState<QueryDocumentSnapshot[]>([]);
+
+    useEffect(() => {
+        const unsubscribe = onSnapshot(query(collection(db, "posts"), orderBy('timestamp', 'desc')), snapshot => {
+            setPosts(snapshot.docs);
+        })
+
+        return () => {
+            unsubscribe();
+        }
+    }, [db]);
+
+    console.log(posts)
+
+   
+
   return (
     <div>
         {posts.map(post => (
             <Post key={post.id}
             id={post.id}
-            img={post.img}
-            userName={post.userName}
-            userImg={post.userImg}
-            caption={post.caption}/>
+            img={post.data().image}
+            userName={post.data().username}
+            userImg={post.data().profileImg}
+            caption={post.data().caption}/>
         ))}
       
     </div>
