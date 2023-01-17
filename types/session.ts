@@ -1,20 +1,17 @@
+import { DefaultSession } from "next-auth"
+import 'next-auth'
 
 
-export interface Session {
-    session: Ses
-    token: Token
-    user: User
-}
+declare module 'next-auth' {
+    export interface User {
+      uid: string
+      username:string
+    }
 
-interface User {
-    name:string
-    uid:string
-}
+    export interface Session {
+        user: User;
+      }
+  }
 
-interface Token {
-    sub:string
-}
 
-interface Ses {
-    user: User
-}
+

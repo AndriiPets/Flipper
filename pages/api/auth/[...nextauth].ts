@@ -1,7 +1,7 @@
 import NextAuth from "next-auth"
 import { OAuthConfig } from "next-auth/providers";
 import GoogleProvider, { GoogleProfile } from "next-auth/providers/google"
-import { Session } from "../../../types/session"
+import { Session } from "next-auth"
 export const authOptions = {
   // Configure one or more authentication providers
   providers: [
@@ -16,13 +16,15 @@ export const authOptions = {
   },
 
   callbacks: {
-    async session( { session, token, user}:any) {
+    session: async ( { session, token, user}:any): Promise<Session> => {
       session.user.username = session.user.name
       .split(' ')
       .join('')
       .toLocaleLowerCase();
 
-      session.user.uid = token.sub;
+      if (session?.user) {
+        session.user.uid = token.sub;
+      }
       return session
     }
   }
