@@ -1,5 +1,4 @@
-import React from 'react'
-import { PostType } from '../types/post'
+import React, { MouseEventHandler, useEffect, useState } from 'react'
 import {
     BookmarkIcon,
     ChatBubbleLeftEllipsisIcon,
@@ -9,8 +8,73 @@ import {
     PaperAirplaneIcon
 } from '@heroicons/react/24/outline'
 import { HeartIcon as FilledHeartIcon} from '@heroicons/react/24/solid'
+import { useSession } from 'next-auth/react'
+import { 
+  addDoc, 
+  collection, 
+  doc, 
+  onSnapshot, 
+  orderBy, 
+  query, 
+  QueryDocumentSnapshot, 
+  serverTimestamp, 
+  setDoc 
+} from 'firebase/firestore'
+import { db } from '../firebase'
+import Moment from 'react-moment'
 
 function Post({id, img, userImg, userName, caption}: any) {
+  const { data: session } = useSession();
+  const [comments, setComments] = useState<QueryDocumentSnapshot[]>([]);
+  const [comment, setComment] = useState<string>('');
+  const [likes, setLikes] = useState<QueryDocumentSnapshot[]>([])
+
+  useEffect(() => {
+    const subscribtion = onSnapshot(
+      query(collection(db, 'posts', id, 'comments'), 
+      orderBy('timestamp', 'desc')), snapshot => {
+      setComments(snapshot.docs)
+
+      console.log(session)
+    });
+
+    return () => {
+      subscribtion();
+    }
+  },[db, id])
+
+  useEffect(() => {
+    const subscribtion = onSnapshot(
+      query(collection(db, 'posts', id, 'comments')), snapshot => {
+      setLikes(snapshot.docs)
+    });
+
+    return () => {
+      subscribtion();
+    }
+  },[db, id])
+
+  const likePost = async () => {
+    await setDoc(doc(db, 'posts', id, 'likes', session?.user.uid as string), {
+      username: session?.user.username
+    })
+  }
+
+  const sendComment = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+
+    const commentToSend = comment;
+    setComment('')
+
+    await addDoc(collection(db, 'posts', id, 'comments'), {
+      comment: commentToSend,
+      username: session?.user.username,
+      userImage: session?.user?.image,
+      timestamp: serverTimestamp(),
+    })
+  }
+
+
   return (
     <div className='bg-white border my-7 rounded-sm'>
       {/* Header */}
@@ -25,14 +89,19 @@ function Post({id, img, userImg, userName, caption}: any) {
       <img src={img} className='object-cover w-full'/>
 
       {/* Buttons */}
-      <div className='flex justify-between px-4 pt-4'>
-        <div className='flex space-x-4'>
-            <HeartIcon className='btn'/>
+      {session && (
+        <div className='flex justify-between px-4 pt-4'>
+          <div className='flex space-x-4'>
+            <HeartIcon 
+            onClick={likePost}
+            className='btn'/>
             <ChatBubbleLeftEllipsisIcon className='btn'/>
             <PaperAirplaneIcon className='btn'/>
-        </div>
+          </div>
         <BookmarkIcon className='btn'/>
       </div>
+      )}
+      
 
       {/* Caption */}
       <p className='truncate p-5'>
@@ -40,16 +109,51 @@ function Post({id, img, userImg, userName, caption}: any) {
         {caption}
       </p>
 
+
       {/* Comments */}
+      {comments.length > 0 && (
+        <div 
+        className='ml-10 h-20 overflow-y-scroll scrollbar-thumb-black scrollbar-thin'>
+          {comments.map((comment) => (
+            <div key={comment.id}
+            className='flex items-center space-x-2 mb-3'>
+              <img 
+              className='h-7 rounded-full'
+              src={comment.data().userImage} 
+              />
+              <p className='text-sm flex-1'>
+                
+                <span className='font-bold'>{comment.data().username}</span>
+                {" "}
+                {comment.data().comment}
+                </p>
+
+                <Moment fromNow
+                className='pr-5 text-xs'>
+                  {comment.data().timestamp?.toDate()}
+                </Moment>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Input box */}
-      <form className='flex items-center p-4'>
-        <FaceSmileIcon className='h-7'/>
-        <input type='text' 
-        className='border-none flex-1 focus:ring-0'
-        placeholder='Add a comment...'/>
-        <button className='font-semibold text-blue-400'>Post</button>
+      {session && (
+        <form className='flex items-center p-4'>
+          <FaceSmileIcon className='h-7'/>
+          <input type='text' 
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            className='border-none flex-1 focus:ring-0'
+            placeholder='Add a comment...'/>
+          <button 
+          type='submit'
+          onClick={sendComment}
+          disabled={!comment?.trim()}
+          className='font-semibold text-blue-400'>Post</button>
       </form>
+      )}
+      
     </div>
   )
 }
