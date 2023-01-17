@@ -1,5 +1,4 @@
 import NextAuth from "next-auth"
-import { OAuthConfig } from "next-auth/providers";
 import GoogleProvider, { GoogleProfile } from "next-auth/providers/google"
 import { Session } from "next-auth"
 export const authOptions = {
