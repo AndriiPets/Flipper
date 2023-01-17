@@ -12,6 +12,7 @@ import { useSession } from 'next-auth/react'
 import { 
   addDoc, 
   collection, 
+  deleteDoc, 
   doc, 
   onSnapshot, 
   orderBy, 
@@ -22,12 +23,16 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import Moment from 'react-moment'
+import EmojiPicker,{ EmojiStyle, Categories, Emoji, EmojiClickData} from 'emoji-picker-react';
+
 
 function Post({id, img, userImg, userName, caption}: any) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<QueryDocumentSnapshot[]>([]);
   const [comment, setComment] = useState<string>('');
-  const [likes, setLikes] = useState<QueryDocumentSnapshot[]>([])
+  const [showPicker, setShowPicker] = useState(false);
+  const [likes, setLikes] = useState<QueryDocumentSnapshot[]>([]);
+  const [hasLiked, setHasLiked] = useState(false);
 
   useEffect(() => {
     const subscribtion = onSnapshot(
@@ -45,7 +50,7 @@ function Post({id, img, userImg, userName, caption}: any) {
 
   useEffect(() => {
     const subscribtion = onSnapshot(
-      query(collection(db, 'posts', id, 'comments')), snapshot => {
+      query(collection(db, 'posts', id, 'likes')), snapshot => {
       setLikes(snapshot.docs)
     });
 
@@ -54,10 +59,32 @@ function Post({id, img, userImg, userName, caption}: any) {
     }
   },[db, id])
 
+  useEffect(() => {
+    setHasLiked(
+      likes.findIndex((like) => like.id === session?.user?.uid) !== -1 
+    )
+    
+    
+  },[likes])
+
   const likePost = async () => {
-    await setDoc(doc(db, 'posts', id, 'likes', session?.user.uid as string), {
-      username: session?.user.username
-    })
+    if (hasLiked) {
+      await deleteDoc(doc(db, 'posts', id, 'likes', session?.user.uid as string));
+
+    } else {
+      await setDoc(doc(db, 'posts', id, 'likes', session?.user.uid as string), {
+        username: session?.user.username,
+      })
+
+    }
+    
+  };
+
+  console.log(hasLiked)
+
+  const emojiOnClick = (emojiObject: EmojiClickData, event: MouseEvent) => {
+    setComment((prevInput) => prevInput + emojiObject.emoji);
+    setShowPicker(false);
   }
 
   const sendComment = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -65,6 +92,7 @@ function Post({id, img, userImg, userName, caption}: any) {
 
     const commentToSend = comment;
     setComment('')
+    setShowPicker(false);
 
     await addDoc(collection(db, 'posts', id, 'comments'), {
       comment: commentToSend,
@@ -92,9 +120,16 @@ function Post({id, img, userImg, userName, caption}: any) {
       {session && (
         <div className='flex justify-between px-4 pt-4'>
           <div className='flex space-x-4'>
-            <HeartIcon 
-            onClick={likePost}
-            className='btn'/>
+            {hasLiked ? (
+              <FilledHeartIcon
+                onClick={likePost}
+                className='btn text-red-500' />
+            ) : (
+              <HeartIcon 
+                onClick={likePost}
+                className='btn'/>
+            )}
+            
             <ChatBubbleLeftEllipsisIcon className='btn'/>
             <PaperAirplaneIcon className='btn'/>
           </div>
@@ -105,6 +140,9 @@ function Post({id, img, userImg, userName, caption}: any) {
 
       {/* Caption */}
       <p className='truncate p-5'>
+        {likes.length > 0 && (
+          <p className='font-bold mb-1'>{likes.length} likes</p>
+        )}
         <span className='font-bold mr-1'>{userName}</span>
         {caption}
       </p>
@@ -134,13 +172,19 @@ function Post({id, img, userImg, userName, caption}: any) {
                 </Moment>
             </div>
           ))}
+          
         </div>
       )}
 
       {/* Input box */}
       {session && (
+        <div>
         <form className='flex items-center p-4'>
-          <FaceSmileIcon className='h-7'/>
+          
+        <FaceSmileIcon className='h-7'
+            onClick={() => setShowPicker((val) => !val)} />
+          
+         
           <input type='text' 
             value={comment}
             onChange={e => setComment(e.target.value)}
@@ -151,7 +195,28 @@ function Post({id, img, userImg, userName, caption}: any) {
           onClick={sendComment}
           disabled={!comment?.trim()}
           className='font-semibold text-blue-400'>Post</button>
+
+          
+          
       </form>
+      <div>
+      
+               {showPicker && (
+                <EmojiPicker 
+                  searchDisabled
+                  skinTonesDisabled
+                  onEmojiClick={emojiOnClick}
+                  previewConfig={
+                    {showPreview: false}
+                  }
+                  emojiStyle={EmojiStyle['TWITTER']}
+                  height={300}
+                  width="100%" />
+          )}
+        
+            
+          </div>
+      </div>
       )}
       
     </div>

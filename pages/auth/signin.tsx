@@ -3,6 +3,7 @@ import React from 'react'
 
 import { getProviders, signIn } from 'next-auth/react'
 import Header from '../../components/Header'
+import logo from '../media/logoimage.png'
 
 function SignIn({providers}:any) {
   return (
@@ -11,8 +12,8 @@ function SignIn({providers}:any) {
     <Header />
     <div className='flex flex-col items-center justify-center min-h-screen py-2 -mt-36 px-14 text-center'>
       <img className='w-80'
-      src='https://links.papareact.com/ocw'></img>
-      <p>App made for educational purposes only!</p>
+      src='/logoimage2.png'></img>
+      <p>App for image posting of the future!</p>
       <div className='mt-40'>
       {Object.values(providers).map((provider:any) => (
         <div key={provider.name}>
