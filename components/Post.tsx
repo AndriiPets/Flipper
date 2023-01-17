@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
     BookmarkIcon,
     ChatBubbleLeftEllipsisIcon,
@@ -23,7 +23,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import Moment from 'react-moment'
-import EmojiPicker,{ EmojiStyle, Categories, Emoji, EmojiClickData} from 'emoji-picker-react';
+import EmojiPicker,{ EmojiStyle, EmojiClickData } from 'emoji-picker-react';
 
 
 function Post({id, img, userImg, userName, caption}: any) {
