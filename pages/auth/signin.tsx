@@ -3,7 +3,7 @@ import React from 'react'
 
 import { getProviders, signIn } from 'next-auth/react'
 import Header from '../../components/Header'
-import logo from '../media/logoimage.png'
+
 
 function SignIn({providers}:any) {
   return (
