@@ -14,6 +14,8 @@ import { useRouter } from 'next/router'
 import { useRecoilState } from 'recoil'
 import { modalState } from '../atoms/ModalAtom'
 
+
+
 function Header() {
     const { data: session} = useSession();
     const [ open, setOpen ] = useRecoilState(modalState);
@@ -26,7 +28,7 @@ function Header() {
             {/* left */}
             <div onClick={() => router.push("/")} className='relative hidden lg:inline-grid w-24 cursor-pointer'>
                 <Image
-                src='https://links.papareact.com/ocw'
+                src='/logoimage2.png'
                 alt=''
                 fill
                 objectFit='contain'
